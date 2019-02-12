@@ -1,10 +1,3 @@
-# cbpro/WebsocketClient.py
-# original author: Daniel Paquin
-# mongo "support" added by Drew Rice
-#
-#
-# Template object to receive messages from the Coinbase Websocket Feed
-
 from __future__ import print_function
 import json
 import base64
@@ -14,7 +7,7 @@ import time
 from threading import Thread
 from websocket import create_connection, WebSocketConnectionClosedException
 from pymongo import MongoClient
-from cbpro.cbpro_auth import get_auth_headers
+from qoinbase.cbpro_auth import get_auth_headers
 
 
 class WebsocketClient(object):
@@ -130,11 +123,11 @@ class WebsocketClient(object):
 
 if __name__ == "__main__":
     import sys
-    import cbpro
+    import qoinbase
     import time
 
 
-    class MyWebsocketClient(cbpro.WebsocketClient):
+    class MyWebsocketClient(qoinbase.WebsocketClient):
         def on_open(self):
             self.url = "wss://ws-feed.pro.coinbase.com/"
             self.products = ["BTC-USD", "ETH-USD"]
