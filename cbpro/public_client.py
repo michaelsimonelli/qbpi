@@ -150,7 +150,6 @@ class PublicClient(object):
         if after:
             params['after'] = str(after)
         if limit and limit < 100:
-            # test change
             # the default limit is 100
             # we only add it if the limit is less than 100
             params['limit'] = limit
