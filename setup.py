@@ -10,11 +10,6 @@ install_requires = [
     'pymongo>=3.5.1',
 ]
 
-tests_require = [
-    'pytest',
-    'python-dateutil>=2.7.5',
-    ]
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -27,10 +22,6 @@ setup(
     url='https://github.com/michaelsimonelli/qoinbase-python',
     packages=find_packages(),
     install_requires=install_requires,
-    tests_require=tests_require,
-    extras_require={
-        'test': tests_require,
-    },
     description='Python client for the Coinbase Pro API - integrates with qoinbase-q',
     classifiers=[
         'Development Status :: 4 - Beta',
