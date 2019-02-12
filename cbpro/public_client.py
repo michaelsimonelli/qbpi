@@ -1,4 +1,9 @@
-
+#
+# cbpro/PublicClient.py
+# Michael Simonelli
+# fork of https://github.com/danpaquin/coinbasepro-python.git
+#
+# For public requests to the Coinbase exchange
 
 import requests
 
@@ -139,8 +144,18 @@ class PublicClient(object):
                      "side": "sell"
          }]
         """
-        
 
+        params = {}
+        if before:
+            params['before'] = str(before)
+        if after:
+            params['after'] = str(after)
+        if limit and limit < 100:
+            # the default limit is 100
+            # we only add it if the limit is less than 100
+            params['limit'] = limit
+
+        endpoint = '/products/{}/trades'.format(product_id)
 
         return self._send_paginated_message(endpoint, params=params)
         
@@ -193,9 +208,10 @@ class PublicClient(object):
                         granularity, acceptedGrans) )
             
             params['granularity'] = granularity
-        return self._send_message('get',
-                                  '/products/{}/candles'.format(product_id),
-                                  params=params)
+        
+        endpoint = '/products/{}/candles'.format(product_id)
+        
+        return self._send_message('get', endpoint, params=params)
     
     def get_product_24hr_stats(self, product_id):
         """Get 24 hr stats for the product.
