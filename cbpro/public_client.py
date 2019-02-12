@@ -17,7 +17,7 @@ class PublicClient(object):
         url (Optional[str]): API URL. Defaults to cbpro API.
 
     """
-
+    
     def __init__(self, api_url='https://api.pro.coinbase.com', timeout=30):
         """Create cbpro API public client.
 
@@ -28,7 +28,7 @@ class PublicClient(object):
         self.url = api_url.rstrip('/')
         self.auth = None
         self.session = requests.Session()
-
+    
     def get_products(self):
         """Get a list of available currency pairs for trading.
 
@@ -48,7 +48,7 @@ class PublicClient(object):
 
         """
         return self._send_message('get', '/products')
-
+    
     def get_product_order_book(self, product_id, level=1):
         """Get a list of open orders for a product.
 
@@ -88,7 +88,7 @@ class PublicClient(object):
         return self._send_message('get',
                                   '/products/{}/book'.format(product_id),
                                   params=params)
-
+    
     def get_product_ticker(self, product_id):
         """Snapshot about the last trade (tick), best bid/ask and 24h volume.
 
@@ -113,7 +113,7 @@ class PublicClient(object):
         """
         return self._send_message('get',
                                   '/products/{}/ticker'.format(product_id))
-
+    
     def get_product_trades(self, product_id, before='', after='', limit=None, result=None):
         """List the latest trades for a product.
 
@@ -143,9 +143,21 @@ class PublicClient(object):
                      "side": "sell"
          }]
         """
-        return self._send_paginated_message('/products/{}/trades'
-                                            .format(product_id))
 
+        params = {}
+        if before:
+            params['before'] = str(before)
+        if after:
+            params['after'] = str(after)
+        if limit and limit < 100:
+            # the default limit is 100
+            # we only add it if the limit is less than 100
+            params['limit'] = limit
+
+        endpoint = '/products/{}/trades'.format(product_id)
+
+        return self._send_paginated_message(endpoint, params=params)
+        
     def get_product_historic_rates(self, product_id, start=None, end=None,
                                    granularity=None):
         """Historic rates for a product.
@@ -193,12 +205,12 @@ class PublicClient(object):
             if granularity not in acceptedGrans:
                 raise ValueError( 'Specified granularity is {}, must be in approved values: {}'.format(
                         granularity, acceptedGrans) )
-
+            
             params['granularity'] = granularity
         return self._send_message('get',
                                   '/products/{}/candles'.format(product_id),
                                   params=params)
-
+    
     def get_product_24hr_stats(self, product_id):
         """Get 24 hr stats for the product.
 
@@ -218,7 +230,7 @@ class PublicClient(object):
         """
         return self._send_message('get',
                                   '/products/{}/stats'.format(product_id))
-
+    
     def get_currencies(self):
         """List known currencies.
 
@@ -236,7 +248,7 @@ class PublicClient(object):
 
         """
         return self._send_message('get', '/currencies')
-
+    
     def get_time(self):
         """Get the API server time.
 
@@ -250,7 +262,7 @@ class PublicClient(object):
 
         """
         return self._send_message('get', '/time')
-
+    
     def _send_message(self, method, endpoint, params=None, data=None):
         """Send API request.
 
@@ -268,7 +280,7 @@ class PublicClient(object):
         r = self.session.request(method, url, params=params, data=data,
                                  auth=self.auth, timeout=30)
         return r.json()
-
+    
     def _send_paginated_message(self, endpoint, params=None):
         """ Send API message that results in a paginated response.
 
