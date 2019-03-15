@@ -14,15 +14,15 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='qoinbase',
+    name='qbpi',
     version='0.0.1',
     author='Michael Simonellli',
     author_email='michael@simo.live',
     license='MIT',
-    url='https://github.com/michaelsimonelli/qoinbase-python',
+    url='https://github.com/michaelsimonelli/qbpi-python',
     packages=find_packages(),
     install_requires=install_requires,
-    description='Python client for the Coinbase Pro API - integrates with qoinbase-q',
+    description='Python client for the Coinbase Pro API - integrates with qbpi-q',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

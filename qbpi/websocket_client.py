@@ -7,7 +7,7 @@ import time
 from threading import Thread
 from websocket import create_connection, WebSocketConnectionClosedException
 from pymongo import MongoClient
-from qoinbase.cbpro_auth import get_auth_headers
+from qbpi.cbpro_auth import get_auth_headers
 
 
 class WebsocketClient(object):
@@ -123,11 +123,11 @@ class WebsocketClient(object):
 
 if __name__ == "__main__":
     import sys
-    import qoinbase
+    import qbpi
     import time
 
 
-    class MyWebsocketClient(qoinbase.WebsocketClient):
+    class MyWebsocketClient(qbpi.WebsocketClient):
         def on_open(self):
             self.url = "wss://ws-feed.pro.coinbase.com/"
             self.products = ["BTC-USD", "ETH-USD"]
