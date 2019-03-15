@@ -1,8 +1,8 @@
-# qoinbasepro-python
-Python client for the [Coinbase Pro API](https://docs.pro.coinbase.com/) (formerly known as
-the GDAX)
+# qbpi
+Q Based Python Interface
+A customized [Coinbase Pro API](https://docs.pro.coinbase.com/) python client to interface with q/kdb.
 
-Forked from [coinbasepro-python](https://github.com/danpaquin/coinbasepro-python)
+Python libaray forked from [coinbasepro-python](https://github.com/danpaquin/coinbasepro-python)
 
 **integrates with** [qoinbasepro-q](https://github.com/michaelsimonelli/qoinbase-q)
 
