@@ -1,4 +1,4 @@
-# qbpi
+# qoinbase
 Q Based Python Interface
 
 The [Coinbase Pro API](https://docs.pro.coinbase.com/) python client libaray, 

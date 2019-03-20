@@ -5,8 +5,8 @@ import requests
 import base64
 import json
 from requests.auth import AuthBase
-from qbpi.public_client import PublicClient
-from qbpi.cbpro_auth import CBProAuth
+from qoinbase.public_client import PublicClient
+from qoinbase.cbpro_auth import CBProAuth
 
 
 class AuthenticatedClient(PublicClient):
