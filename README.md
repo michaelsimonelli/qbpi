@@ -1,8 +1,7 @@
 # qoinbase
-Q Based Python Interface
+Python library for the [Coinbase Pro API](https://docs.pro.coinbase.com/).
 
-The [Coinbase Pro API](https://docs.pro.coinbase.com/) python client libaray, 
-serves as an intergartion layer between a kdb server and the exchange's REST API.
+This particular library has been modified to serve as an integration layer for q/kdb.
 
 ##### Provided under MIT License by Michael Simonelli.
 *Note: this library may be subtly broken or buggy. The code is released under
