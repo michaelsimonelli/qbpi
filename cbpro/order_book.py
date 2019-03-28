@@ -2,8 +2,8 @@ from sortedcontainers import SortedDict
 from decimal import Decimal
 import pickle
 
-from qoinbase.public_client import PublicClient
-from qoinbase.websocket_client import WebsocketClient
+from cbpro.public_client import PublicClient
+from cbpro.websocket_client import WebsocketClient
 
 
 class OrderBook(WebsocketClient):

@@ -1,4 +1,4 @@
-# qoinbase
+# cbpro
 Python client for the [Coinbase Pro API](https://docs.pro.coinbase.com/).
 
 This particular library has been modified to serve as an integration layer for q/kdb.
