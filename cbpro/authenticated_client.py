@@ -20,6 +20,7 @@ class AuthenticatedClient(PublicClient):
         auth (CBProAuth): Custom authentication handler for each request.
         session (requests.Session): Persistent HTTP connection object.
     """
+    
     def __init__(self, key, b64secret, passphrase,
                  api_url="https://api.pro.coinbase.com"):
         """ Create an instance of the AuthenticatedClient class.
@@ -33,7 +34,7 @@ class AuthenticatedClient(PublicClient):
         super(AuthenticatedClient, self).__init__(api_url)
         self.auth = CBProAuth(key, b64secret, passphrase)
         self.session = requests.Session()
-
+    
     def get_account(self, account_id):
         """ Get information for a single account.
 
@@ -53,7 +54,7 @@ class AuthenticatedClient(PublicClient):
                 }
         """
         return self._send_message('get', '/accounts/' + account_id)
-
+    
     def get_accounts(self):
         """ Get a list of trading all accounts.
 
@@ -81,7 +82,7 @@ class AuthenticatedClient(PublicClient):
         * Additional info included in response for margin accounts.
         """
         return self.get_account('')
-
+    
     def get_account_history(self, account_id, **kwargs):
         """ List account activity. Account activity either increases or
         decreases your account balance.
@@ -121,7 +122,7 @@ class AuthenticatedClient(PublicClient):
         """
         endpoint = '/accounts/{}/ledger'.format(account_id)
         return self._send_paginated_message(endpoint, params=kwargs)
-
+    
     def get_account_holds(self, account_id, **kwargs):
         """ Get holds on an account.
 
@@ -166,7 +167,7 @@ class AuthenticatedClient(PublicClient):
         """
         endpoint = '/accounts/{}/holds'.format(account_id)
         return self._send_paginated_message(endpoint, params=kwargs)
-
+    
     def place_order(self, product_id, side, order_type, **kwargs):
         """ Place an order.
 
@@ -177,7 +178,7 @@ class AuthenticatedClient(PublicClient):
         Args:
             product_id (str): Product to order (eg. 'BTC-USD')
             side (str): Order side ('buy' or 'sell)
-            order_type (str): Order type ('limit', 'market', or 'stop')
+            order_type (str): Order type ('limit', 'market')
             **client_oid (str): Order ID selected by you to identify your order.
                 This should be a UUID, which will be broadcast in the public
                 feed for `received` messages.
@@ -224,7 +225,7 @@ class AuthenticatedClient(PublicClient):
             raise ValueError('Margin funding must be specified through use of '
                              'overdraft or by setting a funding amount, but not'
                              ' both')
-
+        
         # Limit order checks
         if order_type == 'limit':
             if kwargs.get('cancel_after') is not None and \
@@ -235,60 +236,61 @@ class AuthenticatedClient(PublicClient):
                     ['IOC', 'FOK']:
                 raise ValueError('post_only is invalid when time in force is '
                                  '`IOC` or `FOK`')
-
+        
         # Market and stop order checks
-        if order_type == 'market' or order_type == 'stop':
+        if order_type == 'market':
             if not (kwargs.get('size') is None) ^ (kwargs.get('funds') is None):
                 raise ValueError('Either `size` or `funds` must be specified '
                                  'for market/stop orders (but not both).')
-
+        
         # Build params dict
         params = {'product_id': product_id,
-                  'side': side,
-                  'type': order_type}
+                  'side':       side,
+                  'type':       order_type}
         params.update(kwargs)
         return self._send_message('post', '/orders', data=json.dumps(params))
 
-    def buy(self, product_id, order_type, **kwargs):
-        """Place a buy order.
-
-        This is included to maintain backwards compatibility with older versions
-        of cbpro-Python. For maximum support from docstrings and function
-        signatures see the order type-specific functions place_limit_order,
-        place_market_order, and place_stop_order.
+    def place_market_order(self, product_id, side, size=None, funds=None,
+                           client_oid=None,
+                           stp=None,
+                           overdraft_enabled=None,
+                           funding_amount=None):
+        """ Place market order.
 
         Args:
             product_id (str): Product to order (eg. 'BTC-USD')
-            order_type (str): Order type ('limit', 'market', or 'stop')
-            **kwargs: Additional arguments can be specified for different order
-                types.
+            side (str): Order side ('buy' or 'sell)
+            size (Optional[Decimal]): Desired amount in crypto.
+                Specify this or `funds`.
+            funds (Optional[Decimal]): Desired amount of quote ccy.
+                Specify this or `size`.
+            client_oid (Optional[str]): User-specified Order ID
+            stp (Optional[str]): Self-trade prevention flag. See `place_order`
+                for details.
+            overdraft_enabled (Optional[bool]): If true funding above and
+                beyond the account balance will be provided by margin, as
+                necessary.
+            funding_amount (Optional[Decimal]): Amount of margin funding to be
+                provided for the order. Mutually exclusive with
+                `overdraft_enabled`.
 
         Returns:
             dict: Order details. See `place_order` for example.
 
         """
-        return self.place_order(product_id, 'buy', order_type, **kwargs)
-
-    def sell(self, product_id, order_type, **kwargs):
-        """Place a sell order.
-
-        This is included to maintain backwards compatibility with older versions
-        of cbpro-Python. For maximum support from docstrings and function
-        signatures see the order type-specific functions place_limit_order,
-        place_market_order, and place_stop_order.
-
-        Args:
-            product_id (str): Product to order (eg. 'BTC-USD')
-            order_type (str): Order type ('limit', 'market', or 'stop')
-            **kwargs: Additional arguments can be specified for different order
-                types.
-
-        Returns:
-            dict: Order details. See `place_order` for example.
-
-        """
-        return self.place_order(product_id, 'sell', order_type, **kwargs)
-
+        params = {'product_id':        product_id,
+                  'side':              side,
+                  'order_type':        'market',
+                  'size':              size,
+                  'funds':             funds,
+                  'client_oid':        client_oid,
+                  'stp':               stp,
+                  'overdraft_enabled': overdraft_enabled,
+                  'funding_amount':    funding_amount}
+        params = dict((k, v) for k, v in params.items() if v is not None)
+    
+        return self.place_order(**params)
+    
     def place_limit_order(self, product_id, side, price, size,
                           client_oid=None,
                           stp=None,
@@ -302,8 +304,8 @@ class AuthenticatedClient(PublicClient):
         Args:
             product_id (str): Product to order (eg. 'BTC-USD')
             side (str): Order side ('buy' or 'sell)
-            price (Decimal): Price per cryptocurrency
-            size (Decimal): Amount of cryptocurrency to buy or sell
+            price (Decimal): Price per crypto.
+            size (Decimal): Amount in crypto.
             client_oid (Optional[str]): User-specified Order ID
             stp (Optional[str]): Self-trade prevention flag. See `place_order`
                 for details.
@@ -329,39 +331,50 @@ class AuthenticatedClient(PublicClient):
             dict: Order details. See `place_order` for example.
 
         """
-        params = {'product_id': product_id,
-                  'side': side,
-                  'order_type': 'limit',
-                  'price': price,
-                  'size': size,
-                  'client_oid': client_oid,
-                  'stp': stp,
-                  'time_in_force': time_in_force,
-                  'cancel_after': cancel_after,
-                  'post_only': post_only,
+        params = {'product_id':        product_id,
+                  'side':              side,
+                  'order_type':        'limit',
+                  'price':             price,
+                  'size':              size,
+                  'client_oid':        client_oid,
+                  'stp':               stp,
+                  'time_in_force':     time_in_force,
+                  'cancel_after':      cancel_after,
+                  'post_only':         post_only,
                   'overdraft_enabled': overdraft_enabled,
-                  'funding_amount': funding_amount}
+                  'funding_amount':    funding_amount}
         params = dict((k, v) for k, v in params.items() if v is not None)
-
+        
         return self.place_order(**params)
-
-    def place_market_order(self, product_id, side, size=None, funds=None,
-                           client_oid=None,
-                           stp=None,
-                           overdraft_enabled=None,
-                           funding_amount=None):
-        """ Place market order.
+    
+    def place_stop_loss(self, product_id, stop_price, price, size,
+                        client_oid=None,
+                        stp=None,
+                        overdraft_enabled=None,
+                        funding_amount=None):
+        """ Place stop loss order.
+            *Creates a limit order, stop market is not supported.
 
         Args:
             product_id (str): Product to order (eg. 'BTC-USD')
-            side (str): Order side ('buy' or 'sell)
-            size (Optional[Decimal]): Desired amount in crypto. Specify this or
-                `funds`.
-            funds (Optional[Decimal]): Desired amount of quote currency to use.
-                Specify this or `size`.
+            stop_price (Decimal): Sets trigger price for stop order.
+                Creates a limit order at the `limit_price`.
+            price (Decimal): Price per crypto.
+            size (Decimal): Amount in crypto.
             client_oid (Optional[str]): User-specified Order ID
             stp (Optional[str]): Self-trade prevention flag. See `place_order`
                 for details.
+            time_in_force (Optional[str]): Time in force. Options:
+                'GTC'   Good till canceled
+                'GTT'   Good till time (set by `cancel_after`)
+                'IOC'   Immediate or cancel
+                'FOK'   Fill or kill
+            cancel_after (Optional[str]): Cancel after this period for 'GTT'
+                orders. Options are 'min', 'hour', or 'day'.
+            post_only (Optional[bool]): Indicates that the order should only
+                make liquidity. If any part of the order results in taking
+                liquidity, the order will be rejected and no part of it will
+                execute.
             overdraft_enabled (Optional[bool]): If true funding above and
                 beyond the account balance will be provided by margin, as
                 necessary.
@@ -373,37 +386,49 @@ class AuthenticatedClient(PublicClient):
             dict: Order details. See `place_order` for example.
 
         """
-        params = {'product_id': product_id,
-                  'side': side,
-                  'order_type': 'market',
-                  'size': size,
-                  'funds': funds,
-                  'client_oid': client_oid,
-                  'stp': stp,
+        params = {'product_id':        product_id,
+                  'side':              'sell',
+                  'price':             price,
+                  'order_type':        'limit',
+                  'stop':              'loss',
+                  'stop_price':        stop_price,
+                  'size':              size,
+                  'client_oid':        client_oid,
+                  'stp':               stp,
                   'overdraft_enabled': overdraft_enabled,
-                  'funding_amount': funding_amount}
+                  'funding_amount':    funding_amount}
         params = dict((k, v) for k, v in params.items() if v is not None)
-
+        
         return self.place_order(**params)
 
-    def place_stop_order(self, product_id, side, price, size=None, funds=None,
-                         client_oid=None,
-                         stp=None,
-                         overdraft_enabled=None,
-                         funding_amount=None):
-        """ Place stop order.
+    def place_stop_entry(self, product_id, stop_price, price, size,
+                        client_oid=None,
+                        stp=None,
+                        overdraft_enabled=None,
+                        funding_amount=None):
+        """ Place stop entry order.
+            *Creates a limit order, stop market is not supported.
 
         Args:
             product_id (str): Product to order (eg. 'BTC-USD')
-            side (str): Order side ('buy' or 'sell)
-            price (Decimal): Desired price at which the stop order triggers.
-            size (Optional[Decimal]): Desired amount in crypto. Specify this or
-                `funds`.
-            funds (Optional[Decimal]): Desired amount of quote currency to use.
-                Specify this or `size`.
+            stop_price (Decimal): Sets trigger price for stop order.
+                Creates a limit order at the `limit_price`.
+            price (Decimal): Price per crypto.
+            size (Decimal): Amount in crypto.
             client_oid (Optional[str]): User-specified Order ID
             stp (Optional[str]): Self-trade prevention flag. See `place_order`
                 for details.
+            time_in_force (Optional[str]): Time in force. Options:
+                'GTC'   Good till canceled
+                'GTT'   Good till time (set by `cancel_after`)
+                'IOC'   Immediate or cancel
+                'FOK'   Fill or kill
+            cancel_after (Optional[str]): Cancel after this period for 'GTT'
+                orders. Options are 'min', 'hour', or 'day'.
+            post_only (Optional[bool]): Indicates that the order should only
+                make liquidity. If any part of the order results in taking
+                liquidity, the order will be rejected and no part of it will
+                execute.
             overdraft_enabled (Optional[bool]): If true funding above and
                 beyond the account balance will be provided by margin, as
                 necessary.
@@ -415,20 +440,21 @@ class AuthenticatedClient(PublicClient):
             dict: Order details. See `place_order` for example.
 
         """
-        params = {'product_id': product_id,
-                  'side': side,
-                  'price': price,
-                  'order_type': 'stop',
-                  'size': size,
-                  'funds': funds,
-                  'client_oid': client_oid,
-                  'stp': stp,
+        params = {'product_id':        product_id,
+                  'side':              'buy',
+                  'price':             price,
+                  'order_type':        'limit',
+                  'stop':              'entry',
+                  'stop_price':        stop_price,
+                  'size':              size,
+                  'client_oid':        client_oid,
+                  'stp':               stp,
                   'overdraft_enabled': overdraft_enabled,
-                  'funding_amount': funding_amount}
+                  'funding_amount':    funding_amount}
         params = dict((k, v) for k, v in params.items() if v is not None)
-
+    
         return self.place_order(**params)
-
+    
     def cancel_order(self, order_id):
         """ Cancel a previously placed order.
 
@@ -450,7 +476,7 @@ class AuthenticatedClient(PublicClient):
 
         """
         return self._send_message('delete', '/orders/' + order_id)
-
+    
     def cancel_all(self, product_id=None):
         """ With best effort, cancel all open orders.
 
@@ -474,7 +500,7 @@ class AuthenticatedClient(PublicClient):
         else:
             params = None
         return self._send_message('delete', '/orders', params=params)
-
+    
     def get_order(self, order_id):
         """ Get a single order by order id.
 
@@ -509,7 +535,7 @@ class AuthenticatedClient(PublicClient):
 
         """
         return self._send_message('get', '/orders/' + order_id)
-
+    
     def get_orders(self, product_id=None, status=None, **kwargs):
         """ List your current open orders.
 
@@ -574,7 +600,7 @@ class AuthenticatedClient(PublicClient):
         if status is not None:
             params['status'] = status
         return self._send_paginated_message('/orders', params=params)
-
+    
     def get_fills(self, product_id=None, order_id=None, **kwargs):
         """ Get a list of recent fills.
 
@@ -623,16 +649,16 @@ class AuthenticatedClient(PublicClient):
         """
         if (product_id is None) and (order_id is None):
             raise ValueError('Either product_id or order_id must be specified.')
-
+        
         params = {}
         if product_id:
             params['product_id'] = product_id
         if order_id:
             params['order_id'] = order_id
         params.update(kwargs)
-
+        
         return self._send_paginated_message('/fills', params=params)
-
+    
     def get_fundings(self, status=None, **kwargs):
         """ Every order placed with a margin profile that draws funding
         will create a funding record.
@@ -671,7 +697,7 @@ class AuthenticatedClient(PublicClient):
             params['status'] = status
         params.update(kwargs)
         return self._send_paginated_message('/funding', params=params)
-
+    
     def repay_funding(self, amount, currency):
         """ Repay funding. Repays the older funding records first.
 
@@ -684,12 +710,12 @@ class AuthenticatedClient(PublicClient):
 
         """
         params = {
-            'amount': amount,
+            'amount':   amount,
             'currency': currency  # example: USD
-            }
+        }
         return self._send_message('post', '/funding/repay',
                                   data=json.dumps(params))
-
+    
     def margin_transfer(self, margin_profile_id, transfer_type, currency,
                         amount):
         """ Transfer funds between your standard profile and a margin profile.
@@ -721,12 +747,12 @@ class AuthenticatedClient(PublicClient):
 
         """
         params = {'margin_profile_id': margin_profile_id,
-                  'type': transfer_type,
-                  'currency': currency,  # example: USD
-                  'amount': amount}
+                  'type':              transfer_type,
+                  'currency':          currency,  # example: USD
+                  'amount':            amount}
         return self._send_message('post', '/profiles/margin-transfer',
                                   data=json.dumps(params))
-
+    
     def get_position(self):
         """ Get An overview of your margin profile.
 
@@ -735,7 +761,7 @@ class AuthenticatedClient(PublicClient):
 
         """
         return self._send_message('get', '/position')
-
+    
     def close_position(self, repay_only):
         """ Close position.
 
@@ -749,7 +775,7 @@ class AuthenticatedClient(PublicClient):
         params = {'repay_only': repay_only}
         return self._send_message('post', '/position/close',
                                   data=json.dumps(params))
-
+    
     def deposit(self, amount, currency, payment_method_id):
         """ Deposit funds from a payment method.
 
@@ -771,12 +797,12 @@ class AuthenticatedClient(PublicClient):
                 }
 
         """
-        params = {'amount': amount,
-                  'currency': currency,
+        params = {'amount':            amount,
+                  'currency':          currency,
                   'payment_method_id': payment_method_id}
         return self._send_message('post', '/deposits/payment-method',
                                   data=json.dumps(params))
-
+    
     def coinbase_deposit(self, amount, currency, coinbase_account_id):
         """ Deposit funds from a coinbase account.
 
@@ -801,12 +827,12 @@ class AuthenticatedClient(PublicClient):
                 }
 
         """
-        params = {'amount': amount,
-                  'currency': currency,
+        params = {'amount':              amount,
+                  'currency':            currency,
                   'coinbase_account_id': coinbase_account_id}
         return self._send_message('post', '/deposits/coinbase-account',
                                   data=json.dumps(params))
-
+    
     def withdraw(self, amount, currency, payment_method_id):
         """ Withdraw funds to a payment method.
 
@@ -828,12 +854,12 @@ class AuthenticatedClient(PublicClient):
                 }
 
         """
-        params = {'amount': amount,
-                  'currency': currency,
+        params = {'amount':            amount,
+                  'currency':          currency,
                   'payment_method_id': payment_method_id}
         return self._send_message('post', '/withdrawals/payment-method',
                                   data=json.dumps(params))
-
+    
     def coinbase_withdraw(self, amount, currency, coinbase_account_id):
         """ Withdraw funds to a coinbase account.
 
@@ -858,12 +884,12 @@ class AuthenticatedClient(PublicClient):
                 }
 
         """
-        params = {'amount': amount,
-                  'currency': currency,
+        params = {'amount':              amount,
+                  'currency':            currency,
                   'coinbase_account_id': coinbase_account_id}
         return self._send_message('post', '/withdrawals/coinbase-account',
                                   data=json.dumps(params))
-
+    
     def crypto_withdraw(self, amount, currency, crypto_address):
         """ Withdraw funds to a crypto address.
 
@@ -881,12 +907,12 @@ class AuthenticatedClient(PublicClient):
                 }
 
         """
-        params = {'amount': amount,
-                  'currency': currency,
+        params = {'amount':         amount,
+                  'currency':       currency,
                   'crypto_address': crypto_address}
         return self._send_message('post', '/withdrawals/crypto',
                                   data=json.dumps(params))
-
+    
     def get_payment_methods(self):
         """ Get a list of your payment methods.
 
@@ -895,7 +921,7 @@ class AuthenticatedClient(PublicClient):
 
         """
         return self._send_message('get', '/payment-methods')
-
+    
     def get_coinbase_accounts(self):
         """ Get a list of your coinbase accounts.
 
@@ -904,7 +930,7 @@ class AuthenticatedClient(PublicClient):
 
         """
         return self._send_message('get', '/coinbase-accounts')
-
+    
     def create_report(self, report_type, start_date, end_date, product_id=None,
                       account_id=None, report_format='pdf', email=None):
         """ Create report of historic information about your account.
@@ -940,20 +966,20 @@ class AuthenticatedClient(PublicClient):
                 }
 
         """
-        params = {'type': report_type,
+        params = {'type':       report_type,
                   'start_date': start_date,
-                  'end_date': end_date,
-                  'format': report_format}
+                  'end_date':   end_date,
+                  'format':     report_format}
         if product_id is not None:
             params['product_id'] = product_id
         if account_id is not None:
             params['account_id'] = account_id
         if email is not None:
             params['email'] = email
-
+        
         return self._send_message('post', '/reports',
                                   data=json.dumps(params))
-
+    
     def get_report(self, report_id):
         """ Get report status.
 
@@ -967,7 +993,7 @@ class AuthenticatedClient(PublicClient):
 
         """
         return self._send_message('get', '/reports/' + report_id)
-
+    
     def get_trailing_volume(self):
         """  Get your 30-day trailing volume for all products.
 
