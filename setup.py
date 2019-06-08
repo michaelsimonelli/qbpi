@@ -15,14 +15,14 @@ with open("README.md", "r") as fh:
 
 setup(
     name='cbpro',
-    version='0.0.1',
+    version='1.0.1',
     author='Michael Simonellli',
     author_email='michael@simo.live',
     license='MIT',
     url='https://github.com/michaelsimonelli/cbpro-python',
     packages=find_packages(),
     install_requires=install_requires,
-    description='Python client for the Coinbase Pro API - integrates with cbpro-q',
+    description='Python client for the Coinbase Pro API and qoinbase-q integration',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

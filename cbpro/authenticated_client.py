@@ -249,7 +249,7 @@ class AuthenticatedClient(PublicClient):
                   'type':       order_type}
         params.update(kwargs)
         return self._send_message('post', '/orders', data=json.dumps(params))
-
+    
     def place_market_order(self, product_id, side, size=None, funds=None,
                            client_oid=None,
                            stp=None,
@@ -288,7 +288,7 @@ class AuthenticatedClient(PublicClient):
                   'overdraft_enabled': overdraft_enabled,
                   'funding_amount':    funding_amount}
         params = dict((k, v) for k, v in params.items() if v is not None)
-    
+        
         return self.place_order(**params)
     
     def place_limit_order(self, product_id, side, price, size,
@@ -350,6 +350,9 @@ class AuthenticatedClient(PublicClient):
     def place_stop_loss(self, product_id, stop_price, price, size,
                         client_oid=None,
                         stp=None,
+                        time_in_force=None,
+                        cancel_after=None,
+                        post_only=None,
                         overdraft_enabled=None,
                         funding_amount=None):
         """ Place stop loss order.
@@ -388,24 +391,30 @@ class AuthenticatedClient(PublicClient):
         """
         params = {'product_id':        product_id,
                   'side':              'sell',
-                  'price':             price,
                   'order_type':        'limit',
+                  'price':             price,
+                  'size':              size,
                   'stop':              'loss',
                   'stop_price':        stop_price,
-                  'size':              size,
                   'client_oid':        client_oid,
                   'stp':               stp,
+                  'time_in_force':     time_in_force,
+                  'cancel_after':      cancel_after,
+                  'post_only':         post_only,
                   'overdraft_enabled': overdraft_enabled,
                   'funding_amount':    funding_amount}
         params = dict((k, v) for k, v in params.items() if v is not None)
         
         return self.place_order(**params)
-
+    
     def place_stop_entry(self, product_id, stop_price, price, size,
-                        client_oid=None,
-                        stp=None,
-                        overdraft_enabled=None,
-                        funding_amount=None):
+                         client_oid=None,
+                         stp=None,
+                         time_in_force=None,
+                         cancel_after=None,
+                         post_only=None,
+                         overdraft_enabled=None,
+                         funding_amount=None):
         """ Place stop entry order.
             *Creates a limit order, stop market is not supported.
 
@@ -442,17 +451,20 @@ class AuthenticatedClient(PublicClient):
         """
         params = {'product_id':        product_id,
                   'side':              'buy',
-                  'price':             price,
                   'order_type':        'limit',
+                  'price':             price,
+                  'size':              size,
                   'stop':              'entry',
                   'stop_price':        stop_price,
-                  'size':              size,
                   'client_oid':        client_oid,
                   'stp':               stp,
+                  'time_in_force':     time_in_force,
+                  'cancel_after':      cancel_after,
+                  'post_only':         post_only,
                   'overdraft_enabled': overdraft_enabled,
                   'funding_amount':    funding_amount}
         params = dict((k, v) for k, v in params.items() if v is not None)
-    
+        
         return self.place_order(**params)
     
     def cancel_order(self, order_id):
