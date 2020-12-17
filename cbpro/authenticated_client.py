@@ -282,47 +282,7 @@ class AuthenticatedClient(PublicClient):
                   'type':       order_type}
         params.update(kwargs)
         return self._send_message('post', '/orders', data=json.dumps(params))
-    
-    def place_market_order(self, product_id, side, size=None, funds=None,
-                           client_oid=None,
-                           stp=None,
-                           overdraft_enabled=None,
-                           funding_amount=None):
-        """ Place market order.
 
-        Args:
-            product_id (str): Product to order (eg. 'BTC-USD')
-            side (str): Order side ('buy' or 'sell)
-            size (Optional[Decimal]): Desired amount in crypto.
-                Specify this or `funds`.
-            funds (Optional[Decimal]): Desired amount of quote ccy.
-                Specify this or `size`.
-            client_oid (Optional[str]): User-specified Order ID
-            stp (Optional[str]): Self-trade prevention flag. See `place_order`
-                for details.
-            overdraft_enabled (Optional[bool]): If true funding above and
-                beyond the account balance will be provided by margin, as
-                necessary.
-            funding_amount (Optional[Decimal]): Amount of margin funding to be
-                provided for the order. Mutually exclusive with
-                `overdraft_enabled`.
-
-        Returns:
-            dict: Order details. See `place_order` for example.
-
-        """
-        params = {'product_id':        product_id,
-                  'side':              side,
-                  'order_type':        'market',
-                  'size':              size,
-                  'funds':             funds,
-                  'client_oid':        client_oid,
-                  'stp':               stp,
-                  'overdraft_enabled': overdraft_enabled,
-                  'funding_amount':    funding_amount}
-        params = dict((k, v) for k, v in params.items() if v is not None)
-        
-        return self.place_order(**params)
     
     def place_limit_order(self, product_id, side, price, size,
                           client_oid=None,
@@ -379,7 +339,100 @@ class AuthenticatedClient(PublicClient):
         params = dict((k, v) for k, v in params.items() if v is not None)
         
         return self.place_order(**params)
-    
+
+    def place_market_order(self, product_id, side, size=None, funds=None,
+                           client_oid=None,
+                           stp=None,
+                           overdraft_enabled=None,
+                           funding_amount=None):
+        """ Place market order.
+
+        Args:
+            product_id (str): Product to order (eg. 'BTC-USD')
+            side (str): Order side ('buy' or 'sell)
+            size (Optional[Decimal]): Desired amount in crypto.
+                Specify this or `funds`.
+            funds (Optional[Decimal]): Desired amount of quote ccy.
+                Specify this or `size`.
+            client_oid (Optional[str]): User-specified Order ID
+            stp (Optional[str]): Self-trade prevention flag. See `place_order`
+                for details.
+            overdraft_enabled (Optional[bool]): If true funding above and
+                beyond the account balance will be provided by margin, as
+                necessary.
+            funding_amount (Optional[Decimal]): Amount of margin funding to be
+                provided for the order. Mutually exclusive with
+                `overdraft_enabled`.
+
+        Returns:
+            dict: Order details. See `place_order` for example.
+
+        """
+        params = {'product_id':        product_id,
+                  'side':              side,
+                  'order_type':        'market',
+                  'size':              size,
+                  'funds':             funds,
+                  'client_oid':        client_oid,
+                  'stp':               stp,
+                  'overdraft_enabled': overdraft_enabled,
+                  'funding_amount':    funding_amount}
+        params = dict((k, v) for k, v in params.items() if v is not None)
+        
+        return self.place_order(**params)
+
+    def place_stop_order(self, product_id, stop_type, price, size
+                         client_oid=None,
+                         stp=None,
+                         overdraft_enabled=None,
+                         funding_amount=None):
+        """ Place stop order.
+        Args:
+            product_id (str): Product to order (eg. 'BTC-USD')
+            stop_type(str): Stop type ('entry' or 'loss')
+                      loss: Triggers when the last trade price changes to a value at or below the stop_price.
+                      entry: Triggers when the last trade price changes to a value at or above the stop_price
+            price (Decimal): Desired price at which the stop order triggers.
+            size (Optional[Decimal]): Desired amount in crypto. Specify this or
+                `funds`.
+            funds (Optional[Decimal]): Desired amount of quote currency to use.
+                Specify this or `size`.
+            client_oid (Optional[str]): User-specified Order ID
+            stp (Optional[str]): Self-trade prevention flag. See `place_order`
+                for details.
+            overdraft_enabled (Optional[bool]): If true funding above and
+                beyond the account balance will be provided by margin, as
+                necessary.
+            funding_amount (Optional[Decimal]): Amount of margin funding to be
+                provided for the order. Mutually exclusive with
+                `overdraft_enabled`.
+        Returns:
+            dict: Order details. See `place_order` for example.
+        """
+
+        if stop_type == 'loss':
+            side = 'sell'
+        elif stop_type == 'entry':
+            side = 'buy'
+        else:
+            raise ValueError('Invalid stop_type for stop order: ' + stop_type)
+
+        params = {'product_id': product_id,
+                  'side': side,
+                  'price': price,
+                  'order_type': None,
+                  'stop': stop_type,
+                  'stop_price': price,
+                  'size': size,
+                  'funds': funds,
+                  'client_oid': client_oid,
+                  'stp': stp,
+                  'overdraft_enabled': overdraft_enabled,
+                  'funding_amount': funding_amount}
+        params = dict((k, v) for k, v in params.items() if v is not None)
+
+        return self.place_order(**params)
+
     def place_stop_loss(self, product_id, stop_price, price, size,
                         client_oid=None,
                         stp=None,
