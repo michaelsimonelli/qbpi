@@ -1,9 +1,6 @@
-# cbpro
-Python client for the [Coinbase Pro API](https://docs.pro.coinbase.com/).
 
 This particular library has been modified to serve as an integration layer for q/kdb.
 
-##### Provided under MIT License by Michael Simonelli.
 *Note: this library may be subtly broken or buggy. The code is released under
 the MIT License – please take the following message to heart:*
 > THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR

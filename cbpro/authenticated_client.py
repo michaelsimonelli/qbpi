@@ -1,3 +1,9 @@
+#
+# cbpro/AuthenticatedClient.py
+# Daniel Paquin
+#
+# For authenticated requests to the Coinbase exchange
+
 import hmac
 import hashlib
 import time
@@ -168,7 +174,34 @@ class AuthenticatedClient(PublicClient):
         endpoint = '/accounts/{}/holds'.format(account_id)
         return self._send_paginated_message(endpoint, params=kwargs)
     
-    def place_order(self, product_id, side, order_type, **kwargs):
+
+    def convert_stablecoin(self, amount, from_currency, to_currency):
+        """ Convert stablecoin.
+
+            Args:
+                amount (Decimal): The amount to convert.
+                from_currency (str): Currency type (eg. 'USDC')
+                to_currency (str): Currency type (eg. 'USD').
+
+            Returns:
+                dict: Conversion details. Example::
+                    {
+                        "id": "8942caee-f9d5-4600-a894-4811268545db",
+                        "amount": "10000.00",
+                        "from_account_id": "7849cc79-8b01-4793-9345-bc6b5f08acce",
+                        "to_account_id": "105c3e58-0898-4106-8283-dc5781cda07b",
+                        "from": "USD",
+                        "to": "USDC"
+                    }
+
+            """
+        params = {'from': from_currency,
+                  'to': to_currency,
+                  'amount': amount}
+        return self._send_message('post', '/conversions', data=json.dumps(params))
+
+
+    def place_order(self, product_id, side, order_type=None, **kwargs):
         """ Place an order.
 
         The three order types (limit, market, and stop) can be placed using this
@@ -238,7 +271,7 @@ class AuthenticatedClient(PublicClient):
                                  '`IOC` or `FOK`')
         
         # Market and stop order checks
-        if order_type == 'market':
+        if order_type == 'market' or kwargs.get('stop'):
             if not (kwargs.get('size') is None) ^ (kwargs.get('funds') is None):
                 raise ValueError('Either `size` or `funds` must be specified '
                                  'for market/stop orders (but not both).')
@@ -304,8 +337,8 @@ class AuthenticatedClient(PublicClient):
         Args:
             product_id (str): Product to order (eg. 'BTC-USD')
             side (str): Order side ('buy' or 'sell)
-            price (Decimal): Price per crypto.
-            size (Decimal): Amount in crypto.
+            price (Decimal): Price per cryptocurrency
+            size (Decimal): Amount of cryptocurrency to buy or sell
             client_oid (Optional[str]): User-specified Order ID
             stp (Optional[str]): Self-trade prevention flag. See `place_order`
                 for details.
@@ -1027,3 +1060,16 @@ class AuthenticatedClient(PublicClient):
 
         """
         return self._send_message('get', '/users/self/trailing-volume')
+
+    def get_fees(self):
+        """ Get your maker & taker fee rates and 30-day trailing volume.
+
+        Returns:
+            dict: Fee information and USD volume::
+                {
+                    "maker_fee_rate": "0.0015",
+                    "taker_fee_rate": "0.0025",
+                    "usd_volume": "25000.00"
+                }
+        """
+        return self._send_message('get', '/fees')
