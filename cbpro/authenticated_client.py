@@ -381,7 +381,7 @@ class AuthenticatedClient(PublicClient):
         
         return self.place_order(**params)
 
-    def place_stop_order(self, product_id, stop_type, price, size
+    def place_stop_order(self, product_id, stop_type, price, size,
                          client_oid=None,
                          stp=None,
                          overdraft_enabled=None,
